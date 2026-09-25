@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Install VortexWall from the latest GitHub release.
 #
-#   curl -fsSL https://raw.githubusercontent.com/darkstardevx/vortexwall/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/cybercore-tech/vortexwall/main/install.sh | sh
 #
 # Supported: Linux (x86_64, aarch64) and macOS (x86_64, aarch64).
 set -eu
 
-REPO="darkstardevx/vortexwall"
+REPO="cybercore-tech/vortexwall"
 INSTALL_DIR="${VORTEXWALL_INSTALL_DIR:-$HOME/.local/bin}"
 
 die() {
