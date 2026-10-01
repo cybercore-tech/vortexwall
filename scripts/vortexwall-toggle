@@ -2,22 +2,25 @@
 # vortexwall-toggle on|off|status — switch VortexWall between dry-run
 # (vortexwall.service, logs only) and real enforcement
 # (vortexwall-enforce.service, bans via nftables). Root-only.
+#
+# The choice persists across reboots: exactly one of the two units is
+# enabled at any time, so boot comes back in the mode last selected.
 set -euo pipefail
 
 case "${1:-}" in
   on)
-    systemctl stop vortexwall.service 2>/dev/null || true
-    systemctl start vortexwall-enforce.service
-    echo "VortexWall: ENFORCING (bans are real). Undo: vortexwall-toggle off"
+    systemctl disable --now vortexwall.service 2>/dev/null || true
+    systemctl enable --now vortexwall-enforce.service
+    echo "VortexWall: ENFORCING (bans are real, persists across reboots). Undo: vortexwall-toggle off"
     ;;
   off)
-    systemctl stop vortexwall-enforce.service 2>/dev/null || true
-    systemctl start vortexwall.service
-    echo "VortexWall: dry-run (logging only)"
+    systemctl disable --now vortexwall-enforce.service 2>/dev/null || true
+    systemctl enable --now vortexwall.service
+    echo "VortexWall: dry-run (logging only, persists across reboots)"
     ;;
   status)
     for u in vortexwall.service vortexwall-enforce.service; do
-      printf '%-28s %s\n' "$u" "$(systemctl is-active "$u")"
+      printf '%-28s %-9s %s\n' "$u" "$(systemctl is-active "$u")" "$(systemctl is-enabled "$u" 2>/dev/null)"
     done
     ;;
   *)

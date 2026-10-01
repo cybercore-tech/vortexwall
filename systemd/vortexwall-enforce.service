@@ -47,5 +47,7 @@ ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
 
-# Deliberately no [Install]: only `vortexwall-toggle on` starts this,
-# never boot. Turning real bans on stays a conscious act.
+# Enabled only by `vortexwall-toggle on` (which also disables the dry-run
+# unit), so the boot state is whatever was last chosen deliberately.
+[Install]
+WantedBy=multi-user.target
