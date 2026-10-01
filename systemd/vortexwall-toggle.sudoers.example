@@ -1,0 +1,8 @@
+# OPTIONAL. Lets one user flip VortexWall on/off without a password, for an
+# automated trigger such as a laptop's "untrusted Wi-Fi joined" hook calling
+# `sudo -n /usr/local/sbin/vortexwall-toggle on`. Not needed for manual use
+# (`sudo vortexwall-toggle on` prompts as usual), so don't install it unless
+# something non-interactive needs it. Replace `youruser`, then install with:
+#   sudo install -m 440 vortexwall-toggle.sudoers.example /etc/sudoers.d/vortexwall-toggle
+#   sudo visudo -c
+youruser ALL=(root) NOPASSWD: /usr/local/sbin/vortexwall-toggle on, /usr/local/sbin/vortexwall-toggle off
