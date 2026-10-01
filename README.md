@@ -83,10 +83,34 @@ systemctl status vortexwall
 journalctl -u vortexwall -f
 ```
 
-Ships **starting in `--dry-run`** (see the unit's `ExecStart`) — watch it
-against real traffic for a while before enabling real bans. To flip to
-real enforcement: edit `/etc/systemd/system/vortexwall.service`, remove
-`--dry-run` from `ExecStart`, then `daemon-reload` + `restart`.
+Install as root-owned files. The service holds `CAP_NET_ADMIN`, so its
+binary must not be writable by your user:
+
+```bash
+sudo install -m 755 target/release/vortexwall /usr/local/bin/vortexwall
+sudo install -m 755 scripts/vortexwall-toggle /usr/local/sbin/vortexwall-toggle
+sudo install -m 644 systemd/vortexwall.service systemd/vortexwall-enforce.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now vortexwall.service      # dry-run, starts at boot
+```
+
+Ships **starting in `--dry-run`**: watch it against real traffic for a
+while before enabling real bans. Then switch with the toggle:
+
+```bash
+sudo vortexwall-toggle on       # stop dry-run, start vortexwall-enforce.service (real bans)
+sudo vortexwall-toggle off      # back to dry-run
+sudo vortexwall-toggle status
+```
+
+`vortexwall-enforce.service` has no `[Install]` section and conflicts with
+`vortexwall.service`, so enforcement is never enabled at boot by accident,
+and the two never run at once. After a reboot you're back in dry-run until
+you toggle again.
+
+`systemd/vortexwall-toggle.sudoers.example` is an **optional** passwordless
+rule for automated triggers (e.g. a laptop hook that enforces on untrusted
+Wi-Fi). Manual use doesn't need it.
 
 ## 🛑 How to fully kill this
 
@@ -95,8 +119,8 @@ for real:
 
 ```bash
 sudo vortexwall --teardown          # removes every rule + ban immediately
-sudo systemctl disable --now vortexwall
-sudo rm /etc/systemd/system/vortexwall.service
+sudo systemctl disable --now vortexwall vortexwall-enforce
+sudo rm /etc/systemd/system/vortexwall.service /etc/systemd/system/vortexwall-enforce.service /usr/local/sbin/vortexwall-toggle
 sudo systemctl daemon-reload
 ```
 
