@@ -103,10 +103,10 @@ sudo vortexwall-toggle off      # back to dry-run
 sudo vortexwall-toggle status
 ```
 
-`vortexwall-enforce.service` has no `[Install]` section and conflicts with
-`vortexwall.service`, so enforcement is never enabled at boot by accident,
-and the two never run at once. After a reboot you're back in dry-run until
-you toggle again.
+The toggle keeps exactly one of the two units enabled, and they conflict
+with each other, so the two never run at once and **the choice survives
+reboots**: you come back up in whichever mode you last chose. Only the
+toggle enables `vortexwall-enforce.service`; installing it changes nothing.
 
 `systemd/vortexwall-toggle.sudoers.example` is an **optional** passwordless
 rule for automated triggers (e.g. a laptop hook that enforces on untrusted
