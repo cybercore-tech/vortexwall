@@ -185,7 +185,12 @@ mod tests {
     #[test]
     fn tailscale_and_cgnat_ranges_never_bannable() {
         // 100.64.0.0/10 edges + a real tailnet address, and Tailscale IPv6.
-        for ip in ["100.64.0.0", "100.103.120.47", "100.127.255.255", "fd7a:115c:a1e0::1"] {
+        for ip in [
+            "100.64.0.0",
+            "100.103.120.47",
+            "100.127.255.255",
+            "fd7a:115c:a1e0::1",
+        ] {
             let ip: IpAddr = ip.parse().unwrap();
             assert!(is_never_bannable(&ip), "{ip} should be protected");
         }
