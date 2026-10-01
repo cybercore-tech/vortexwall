@@ -49,11 +49,25 @@ pub fn extract_offender(line: &str) -> Option<IpAddr> {
 /// they're the ranges every LAN this box has ever been on (home, a
 /// neighbor's, a library) uses, so banning one is banning a network you're
 /// physically on right now.
+///
+/// Also protected: 100.64.0.0/10 (RFC 6598 shared address space). It isn't
+/// routable on the public internet, and it's the range Tailscale assigns to
+/// tailnet devices, so a ban there would cut off this box's own machines
+/// (bans drop *all* traffic from the address, not just SSH). Tailscale's
+/// IPv6 range (fd7a:115c:a1e0::/48) is already inside fc00::/7.
 pub fn is_never_bannable(ip: &IpAddr) -> bool {
     match ip {
-        IpAddr::V4(v4) => v4.is_loopback() || v4.is_private() || v4.is_link_local(),
+        IpAddr::V4(v4) => {
+            v4.is_loopback() || v4.is_private() || v4.is_link_local() || is_shared_address_space(v4)
+        }
         IpAddr::V6(v6) => v6.is_loopback() || (v6.segments()[0] & 0xfe00) == 0xfc00, // fc00::/7 (ULA)
     }
+}
+
+/// 100.64.0.0/10 (RFC 6598). `Ipv4Addr::is_shared` is still unstable.
+fn is_shared_address_space(v4: &std::net::Ipv4Addr) -> bool {
+    let [a, b, ..] = v4.octets();
+    a == 100 && (b & 0xc0) == 64
 }
 
 /// Sliding-window per-IP failure tracker. `record()` returns `true` the
@@ -163,6 +177,20 @@ mod tests {
             assert!(is_never_bannable(&ip), "{ip} should be protected");
         }
         for ip in ["198.51.100.7", "203.0.113.9", "8.8.8.8"] {
+            let ip: IpAddr = ip.parse().unwrap();
+            assert!(!is_never_bannable(&ip), "{ip} should NOT be protected");
+        }
+    }
+
+    #[test]
+    fn tailscale_and_cgnat_ranges_never_bannable() {
+        // 100.64.0.0/10 edges + a real tailnet address, and Tailscale IPv6.
+        for ip in ["100.64.0.0", "100.103.120.47", "100.127.255.255", "fd7a:115c:a1e0::1"] {
+            let ip: IpAddr = ip.parse().unwrap();
+            assert!(is_never_bannable(&ip), "{ip} should be protected");
+        }
+        // Just outside 100.64.0.0/10 on both sides: ordinary public space.
+        for ip in ["100.63.255.255", "100.128.0.0"] {
             let ip: IpAddr = ip.parse().unwrap();
             assert!(!is_never_bannable(&ip), "{ip} should NOT be protected");
         }
