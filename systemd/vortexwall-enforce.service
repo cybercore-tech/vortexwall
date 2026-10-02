@@ -1,7 +1,9 @@
 [Unit]
-Description=VortexWall — active-blackholing firewall (starts in --dry-run; edit ExecStart to enable real bans)
+Description=VortexWall — active-blackholing firewall (real enforcement, no --dry-run)
 Documentation=https://github.com/cybercore-tech/vortexwall
 After=network.target sshd.service
+# Never both at once: vortexwall-toggle stops the other before starting this.
+Conflicts=vortexwall.service
 
 [Service]
 Type=simple
@@ -16,7 +18,7 @@ CapabilityBoundingSet=CAP_NET_ADMIN
 WorkingDirectory=/home/raven/tools/daemons/vortexwall
 # Run a root-owned copy (/usr/local/bin), not the cargo build dir: this
 # process holds CAP_NET_ADMIN, so its binary must not be user-writable.
-ExecStart=/usr/local/bin/vortexwall --dry-run
+ExecStart=/usr/local/bin/vortexwall
 Restart=on-failure
 RestartSec=5
 
@@ -45,5 +47,7 @@ ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
 
+# Enabled only by `vortexwall-toggle on` (which also disables the dry-run
+# unit), so the boot state is whatever was last chosen deliberately.
 [Install]
 WantedBy=multi-user.target
