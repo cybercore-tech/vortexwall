@@ -250,21 +250,19 @@ async fn main() -> ExitCode {
     let args = Args::parse();
 
     let vortex_status = cybercore::status::ToolStatus {
-        schema_version: 1,
+        schema_version: cybercore::status::SCHEMA_VERSION,
         tool: "vortexwall".to_string(),
-        version: "0.1.0".to_string(),
-        host: hostname::get().map(|h| h.to_string_lossy().into_owned()).unwrap_or_else(|_| "localhost".to_string()),
-        updated_at: chrono::Utc::now().to_rfc3339(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        host: cybercore::status::hostname(),
+        updated_at: cybercore::status::now_rfc3339(),
         health: cybercore::status::Health::Ok,
         summary: "Auth log monitor and nftables blackhole operational".to_string(),
         metrics: vec![],
         events: vec![],
-        actions: vec![
-            cybercore::status::Action {
-                label: "VortexWall Daemon".to_string(),
-                argv: vec!["vortexwall".to_string()],
-            },
-        ],
+        actions: vec![cybercore::status::Action {
+            label: "VortexWall Daemon".to_string(),
+            argv: vec!["vortexwall".to_string()],
+        }],
     };
     let _ = cybercore::status::write(&vortex_status);
 
