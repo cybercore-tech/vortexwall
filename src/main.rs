@@ -249,6 +249,23 @@ async fn run_daemon(args: Args) -> std::io::Result<()> {
 async fn main() -> ExitCode {
     let args = Args::parse();
 
+    let vortex_status = cybercore::status::ToolStatus {
+        schema_version: cybercore::status::SCHEMA_VERSION,
+        tool: "vortexwall".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        host: cybercore::status::hostname(),
+        updated_at: cybercore::status::now_rfc3339(),
+        health: cybercore::status::Health::Ok,
+        summary: "Auth log monitor and nftables blackhole operational".to_string(),
+        metrics: vec![],
+        events: vec![],
+        actions: vec![cybercore::status::Action {
+            label: "VortexWall Daemon".to_string(),
+            argv: vec!["vortexwall".to_string()],
+        }],
+    };
+    let _ = cybercore::status::write(&vortex_status);
+
     if args.admin {
         return match run_admin(&args) {
             Ok(code) => ExitCode::from(code as u8),
